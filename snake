@@ -1,0 +1,117 @@
+import pygame
+import math
+import sys
+import random
+
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
+WIDTH = 640
+HEIGHT = 480
+SIZE = 5
+
+class Food:
+
+    def __init__(self):
+        self.pos = []
+        self.spawn()
+
+    def draw(self, screen):
+        box = (self.pos[0], self.pos[1], SIZE, SIZE)
+        pygame.draw.rect(screen, RED, (box), 0)
+
+    def spawn(self):
+        self.pos = [random.randrange(WIDTH/SIZE)*SIZE, random.randrange(HEIGHT/SIZE)*SIZE]
+        
+
+class Snake:
+
+    def __init__(self, pos):
+        self.pos = list(pos)
+        self.vel = [0, SIZE]
+        self.segments = [ list(pos) ]
+        self.extend_ammount = 1000
+        self.extension_left = 0
+
+    def update(self):
+        self.pos[0] = (self.pos[0] + self.vel[0]) % WIDTH
+        self.pos[1] = (self.pos[1] + self.vel[1]) % HEIGHT
+        if self.extension_left == 0:
+            self.segments.pop(0)
+        else:
+            self.extension_left -= 1
+        self.segments.append(list(self.pos))
+
+    def draw(self, screen):
+        for chunk in self.segments:
+            box = (chunk[0], chunk[1], SIZE, SIZE)
+            pygame.draw.rect(screen, BLACK, (box), 0)
+
+    def left(self):
+        if self.vel[1] != 0:
+            self.vel = self.new_vel([-1, 0])
+
+    def right(self):
+        if self.vel[1] != 0:
+            self.vel = self.new_vel([1, 0])
+
+    def up(self):
+        if self.vel[0] != 0:
+            self.vel = self.new_vel([0, -1])
+
+    def down(self):
+        if self.vel[0] != 0:
+            self.vel = self.new_vel([0, 1])
+
+    def new_vel(self, vel):
+        return [vel[0] * SIZE, vel[1] * SIZE]
+
+    def eat(self):
+        self.extension_left += self.extend_ammount
+
+class Game:
+
+    def __init__(self):
+        self.running = True
+        self.snake = Snake((WIDTH/2, HEIGHT/2))
+        self.food = Food()
+
+    def main(self, screen):
+        clock = pygame.time.Clock()
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                    if event.key == pygame.K_LEFT:
+                        self.snake.left()
+                    if event.key == pygame.K_RIGHT:
+                        self.snake.right()
+                    if event.key == pygame.K_UP:
+                        self.snake.up()
+                    if event.key == pygame.K_DOWN:
+                        self.snake.down()
+            self.update()
+            self.draw(screen)
+            clock.tick(15)
+        pygame.quit()
+        sys.exit()
+
+    def update(self):
+        if self.snake.pos == self.food.pos:
+            self.snake.eat()
+            self.food.spawn()
+        self.snake.update()
+
+    def draw(self, screen):
+        screen.fill((200, 200, 200))
+        self.snake.draw(screen)
+        self.food.draw(screen)
+        pygame.display.update()
+
+
+if __name__ == '__main__':
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Snake")
+    Game().main(screen)
