@@ -23,7 +23,7 @@ COLOURS = [
 
 WIDTH = 640
 HEIGHT = 480
-SIZE = 10
+SIZE = 20
 
 def off_grid(coords, length):
     '''
@@ -102,8 +102,12 @@ class Board:
                 if box[COLOUR] == colour_picked:
                     count += 1
                 if box[FLOODED]:
+                    count += 1
                     box[COLOUR] = colour_picked
-        print count
+
+        if count == SIZE ** 2:
+            pass
+        return count
 
 class Game:
 
