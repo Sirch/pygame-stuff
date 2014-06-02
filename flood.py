@@ -11,6 +11,7 @@ GREEN = (0,255,0)
 BLUE = (0,0,255)
 BLACK = (0, 0, 0)
 
+# Some RGB colours.
 COLOURS = [
     (255,119,226),
     (255,119,0),
@@ -22,9 +23,12 @@ COLOURS = [
 
 WIDTH = 640
 HEIGHT = 480
-SIZE = 20
+SIZE = 10
 
 def off_grid(coords, length):
+    '''
+    Are these coordinates off a grid of a length
+    '''
     if min(coords) < 0 or max(coords) == length:
         return True
     return False
@@ -34,73 +38,78 @@ class Board:
     def __init__(self, number_squares, rect):
         '''
         The board is a 2x2 square grid of squares with number_squares per side.
+        rect is a pygame rect object for the flood game area.
         '''
         self.rect = rect
         self.box_size = [ float(x)/number_squares for x in rect.size ]
         self.grid = []
         self.adjacents = []
+        # initialise the grid.
         for row in range(number_squares):
             row = []
             for column in range(number_squares):
                 row.append([random.randrange(len(COLOURS)),False])
             self.grid.append(row)
+        # start the flood in the top left
         self.grid[0][0][FLOODED] = True
         self.edges=[(0,0)]
-        self.edges = self.find_adjacents(self.grid[0][0][COLOUR], self.edges)
+        self.edges = self.find_adjacents(self.edges)
 
-    def find_adjacents(self, colour, flood):
+    def find_adjacents(self, flood):
+        colour = self.grid[0][0][COLOUR]
+        local_flood = list(flood)
         flood_edges =[]
         neighbors = [(-1,0),(+1,0),(0,-1),(0,+1)]
-        for x,y in flood:
+        for x,y in local_flood:
             adjacent_tiles_flooded_or_off_grid = 0
             for delta in neighbors:
                 inspect_x = x + delta[0]
                 inspect_y = y + delta[1]
-
-                inspected_box_colour = self.grid[inspect_x][inspect_y][COLOUR]
-                inspected_box_flooded = self.grid[inspect_x][inspect_y][FLOODED]
-                if off_grid([inspect_x, inspect_y], len(self.grid)):
+                if off_grid([inspect_x, inspect_y], len(self.grid[0])):
                     adjacent_tiles_flooded_or_off_grid += 1
-                elif inspected_box_colour == colour and not inspected_box_flooded:
-                    self.grid[inspect_x][inspect_y][FLOODED] = True
-                    flood.append([inspect_x,inspect_y])
-                    adjacent_tiles_flooded_or_off_grid += 1
+                else:
+                    inspected_box_colour = self.grid[inspect_x][inspect_y][COLOUR]
+                    inspected_box_flooded = self.grid[inspect_x][inspect_y][FLOODED]
+                    if inspected_box_colour == colour:
+                        adjacent_tiles_flooded_or_off_grid += 1
+                        if not inspected_box_flooded:
+                            self.grid[inspect_x][inspect_y][FLOODED] = True
+                            local_flood.append([inspect_x,inspect_y])
 
             if adjacent_tiles_flooded_or_off_grid != 4:
                 flood_edges.append([x,y])
 
         return flood_edges
-            
-                
 
-        
-        
+
     def draw(self, screen):
         pygame.draw.rect(screen, WHITE, self.rect, 1)
         for idx_y, row in enumerate(self.grid):
             for idx_x, box in enumerate(row):
                 box_rect = pygame.Rect((self.rect.left + idx_x * self.box_size[0],
                             self.rect.top + idx_y * self.box_size[1]),
-                            self.box_size)                           
+                            self.box_size)
                 pygame.draw.rect(screen, COLOURS[box[0]], box_rect, 0)
 
     def flood(self, rgb):
         colour_picked = COLOURS.index(rgb)
-        if self.grid[0][0][0] == colour_picked:
+        if self.grid[0][0][COLOUR] == colour_picked:
             return
-        self.edges = self.find_adjacents(colour_picked, self.edges)
+        self.edges = self.find_adjacents(self.edges)
+        count = 0
         for idx_y, row in enumerate(self.grid):
             for idx_x, box in enumerate(row):
-               if box[FLOODED]:
-                   box[0] = colour_picked
-
-        
+                if box[COLOUR] == colour_picked:
+                    count += 1
+                if box[FLOODED]:
+                    box[COLOUR] = colour_picked
+        print count
 
 class Game:
 
     def __init__(self):
         self.running = True
-        self.board = Board(20,pygame.Rect(200,30,400,400))
+        self.board = Board(SIZE,pygame.Rect(200,30,400,400))
         self.buttons = []
         for idx, colour in enumerate(COLOURS):
              self.buttons.append([pygame.Rect(30,30+idx*50,40,40),colour])
