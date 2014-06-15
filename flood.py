@@ -6,24 +6,36 @@ import random
 COLOUR = 0
 FLOODED = 1
 WHITE = (255, 255, 255)
+ORANGE = (255,119,0)
 RED = (255, 0, 0)
-GREEN = (0,255,0)
+GREEN = (31, 215, 25)
 BLUE = (0,0,255)
 BLACK = (0, 0, 0)
+PINK = (255,119,226),
+DARK_RED = (233, 28, 28)
 
 # Some RGB colours.
+# COLOURS = [
+#     (255,119,226),
+#     (255,119,0),
+#     GREEN,
+#     (0,255,243),
+#     (113,21,218),
+#     (255,239,52)
+#     ]
+    
 COLOURS = [
-    (255,119,226),
-    (255,119,0),
-    GREEN,
-    (0,255,243),
-    (113,21,218),
-    (255,239,52)
-    ]
+        PINK,
+        GREEN,
+        (0,255,243),
+        (113,21,218),
+        (255,239,52),
+        DARK_RED
+        ]
 
 WIDTH = 640
 HEIGHT = 480
-SIZE = 20
+SIZE = 25
 
 def off_grid(coords, length):
     '''
@@ -107,6 +119,7 @@ class Board:
 
         if count == SIZE ** 2:
             pass
+
         return count
 
 class Game:
@@ -117,6 +130,7 @@ class Game:
         self.buttons = []
         for idx, colour in enumerate(COLOURS):
              self.buttons.append([pygame.Rect(30,30+idx*50,40,40),colour])
+        self.moves_left = SIZE * 2
 
     def main(self, screen):
         clock = pygame.time.Clock()
@@ -145,7 +159,13 @@ class Game:
     def check_button_clicked(self, pos):
         for button in self.buttons:
             if button[0].collidepoint(pos):
-                self.board.flood(button[1])
+                count = self.board.flood(button[1])
+                if count == SIZE ** 2:
+                    print "WINNER"
+                else:
+                    self.moves_left -= 1
+                    print self.moves_left
+
 
     def draw_buttons(self, screen):
         for button in self.buttons:
